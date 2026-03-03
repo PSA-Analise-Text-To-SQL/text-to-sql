@@ -25,6 +25,7 @@ def generate_sql_query(question, schema, api_key, current_dialect):
         3. Não invente colunas.
         4. Não responda com outras operações além de SELECT.
         5. Caso seja identificado um pedido não condizente com SELECT, retorne uma mensagem de erro.
+        6. Caso haja nomes de colunas iguais em 2 tabelas de uma query, utilize apelidos 'AS' para evitar confusão.
         """
 
         response = client.models.generate_content(
