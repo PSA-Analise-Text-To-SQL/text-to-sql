@@ -1,5 +1,5 @@
 import streamlit as st
-from src.ai_engine import generate_sql_query
+from src.services.llm_service import GeminiLLMService
 from src.models.database_parameters import DatabaseParameters
 from src.services.database_service import DatabaseService
 
@@ -95,8 +95,8 @@ else:
         else:
             with st.spinner("IA processando..."):
                 current_schema = st.session_state.db_service.get_schema()
-                
-                sql_result = generate_sql_query(question, current_schema, gemini_key, db_type)
+                llm_service = GeminiLLMService(gemini_key)
+                sql_result = llm_service.generate_sql_query(question, current_schema, db_type)
                 
                 st.subheader("Query Gerada")
                 st.code(sql_result, language="sql")

@@ -68,7 +68,6 @@ class DatabaseService:
         if not self._engine:
             raise RuntimeError("Conecte-se a um banco primeiro.")
 
-        # Aplicação do tratamento de exceções focado na execução segura
         try:
             safe_sql = self._sanitize_query(sql)
 
