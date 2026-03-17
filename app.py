@@ -168,9 +168,7 @@ else:
                                 df_result=df
                             )
                     except Exception as e:
-                        # st.error(_friendly_error_message(e, context="query"))
-                        st.error(f"❌ Erro: {str(e)}")  # Mostra o erro real
-                        st.write(f"Debug: {type(e).__name__}")
+                        st.error(_friendly_error_message(e, context="query"))
 
         if st.session_state.sql_result:
             st.subheader("Query Gerada")
