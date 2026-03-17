@@ -63,3 +63,9 @@ urllib3==2.6.3
 watchdog==6.0.0
 websockets==15.0.1
 psycopg2-binary
+ruff==0.15.5
+mypy==1.19.1
+radon==6.0.1
+bandit==1.9.4
+pytest==9.0.2
+pytest-cov==7.0.0

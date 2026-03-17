@@ -1,0 +1,20 @@
+[tool.ruff]
+# Habilita regras de Erro (E), Avisos (W), Isort (I), e Bugbear (B)
+select = ["E", "F", "I", "B", "C4", "UP"]
+ignore = []
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.mccabe]
+# Define o limite de complexidade ciclomática (Ruff também faz isso!)
+max-complexity = 10
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+warn_unused_configs = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "venv", ".venv"]
+skips = ["B101"] # Exemplo: ignora 'assert' em código de produção se necessário

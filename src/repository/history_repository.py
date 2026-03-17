@@ -49,8 +49,8 @@ class HistoryRepository:
                     entry.result_preview,
                     entry.created_at
                 ))
+                entry.id = cursor.lastrowid  # ✅ dentro do bloco, cursor ainda aberto
             conn.commit()
-            entry.id = cursor.lastrowid
         return entry
 
     def find_all(self) -> list[HistoryEntry]:
