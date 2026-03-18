@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from pydantic import BaseModel, Field
+
 
 class DatabaseParameters(BaseModel, ABC):
     host: str = Field(..., description="Endereço do servidor")
