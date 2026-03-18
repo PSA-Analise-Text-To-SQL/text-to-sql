@@ -1,5 +1,5 @@
-import pandas as pd
 
+import pandas as pd  # type: ignore
 from src.models.history_entry import HistoryEntry
 from src.repository.history_repository import HistoryRepository
 

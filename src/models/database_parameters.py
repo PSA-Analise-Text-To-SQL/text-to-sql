@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, Field
+from typing import Any
 
 
 class DatabaseParameters(BaseModel, ABC):
@@ -11,7 +12,7 @@ class DatabaseParameters(BaseModel, ABC):
     port: int = Field(..., gt=0, description="Porta de conexão")
 
     @staticmethod
-    def make(dialect: str, **kwargs) -> "DatabaseParameters":
+    def make(dialect: str, **kwargs: Any) -> "DatabaseParameters":
         if dialect.lower() == "postgresql":
             return PostgresParameters(**kwargs)
         elif dialect.lower() == "mysql":

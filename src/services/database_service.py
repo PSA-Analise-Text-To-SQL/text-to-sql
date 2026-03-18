@@ -8,6 +8,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from src.models.database_parameters import DatabaseParameters
+import pandas as pd # type: ignore
+import re
+import logging
 
 # Regista falhas de segurança e erros da IA num ficheiro oculto
 logging.basicConfig(
@@ -90,7 +93,6 @@ class DatabaseService:
                     "Operação de segurança ativada: "
                     f"O comando restrito '{keyword}' não é permitido."
                 )
-
         return sql
 
     def execute_query(self, sql: str) -> pd.DataFrame:

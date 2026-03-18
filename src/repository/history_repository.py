@@ -16,10 +16,10 @@ class HistoryRepository:
         }
         self._ensure_table()
 
-    def _get_connection(self):
+    def _get_connection(self) -> mysql.connector.abstracts.MySQLConnection:  # type: ignore
         return mysql.connector.connect(**self._config)
 
-    def _ensure_table(self):
+    def _ensure_table(self) -> None:
         """Cria a tabela se ela não existir."""
         sql = """
             CREATE TABLE IF NOT EXISTS query_history (
@@ -70,7 +70,7 @@ class HistoryRepository:
                 rows = cursor.fetchall()
         return [HistoryEntry(**row) for row in rows]
 
-    def clear(self):
+    def clear(self) -> None:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM query_history")

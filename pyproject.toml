@@ -1,7 +1,21 @@
 # pyproject.toml
 [tool.ruff]
-line-length = 88
 target-version = "py310"
+line-length = 88
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (erros de lógica/variáveis não usadas)
+    "I",    # isort (organização de imports)
+    "B",    # flake8-bugbear (design de código propenso a bugs)
+    "C4",   # flake8-comprehensions (melhoria de performance em listas/dicionários)
+    "UP",   # pyupgrade (sugere sintaxes mais modernas do Python)
+    "S",    # flake8-bandit (segurança integrada)
+    "N",    # pep8-naming (padrões de nomes de variáveis/classes)
+    "SIM",  # flake8-simplify (ajuda a reduzir a complexidade do código)
+    "ANN",  # flake8-annotations (garante que você está tipando as funções)
+]
+ignore = ["ANN101", "ANN102"] # Ignora anotação de 'self' e 'cls' (muito repetitivo)
 
 [tool.ruff.lint]
 # Mudamos select e ignore para cá
