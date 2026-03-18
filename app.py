@@ -1,11 +1,14 @@
 import os
+
 import streamlit as st
 from dotenv import load_dotenv
-from src.services.llm_service import GeminiLLMService
+
 from src.models.database_parameters import DatabaseParameters
+from src.repository.history_repository import HistoryRepository
 from src.services.database_service import DatabaseService
 from src.services.history_service import HistoryService
 from src.repository.history_repository import HistoryRepository
+from src.utils.error_handling import friendly_error_message
 
 load_dotenv()
 
@@ -27,37 +30,6 @@ if "last_question" not in st.session_state:
     st.session_state.last_question = ""
 if "history_service" not in st.session_state:
     st.session_state.history_service = None
-
-
-def _friendly_error_message(exc: Exception, context: str = "geral") -> str:
-    msg = str(exc).lower()
-
-    # Conexão
-    if any(k in msg for k in ["password authentication failed", "access denied", "invalid credentials", "login failed"]):
-        return "Não foi possível conectar: usuário ou senha inválidos."
-    if any(k in msg for k in ["could not translate host name", "name or service not known", "unknown host"]):
-        return "Não foi possível conectar: host inválido ou inexistente."
-    if any(k in msg for k in ["connection refused", "can't connect", "refused"]):
-        return "Não foi possível conectar: o servidor recusou a conexão."
-    if any(k in msg for k in ["timed out", "timeout"]):
-        return "Não foi possível conectar: tempo de resposta excedido."
-    if any(k in msg for k in ["unknown database", "database does not exist", "ora-12514"]):
-        return "Não foi possível conectar: banco de dados não encontrado."
-    if any(k in msg for k in ["permission denied", "not authorized", "insufficient privilege"]):
-        return "Você não tem permissão para realizar esta operação."
-
-    # Execução SQL
-    if context == "query":
-        if any(k in msg for k in ["429", "resource_exhausted", "quota exceeded", "rate limit"]):
-            return "⏳ Limite de requisições atingido na API Google. Tente novamente em alguns minutos ou considere um plano pago."
-        if any(k in msg for k in ["erro ao gerar sql", "a ia não retornou", "api key", "invalid api"]):
-            return "Não foi possível gerar a consulta: verifique a API Key ou reformule a pergunta."
-        if any(k in msg for k in ["syntax error", "sql syntax", "ora-00933", "ora-00900"]):
-            return "A consulta gerada é inválida para este banco."
-        return "Não foi possível executar a consulta no banco."
-
-    return "Ocorreu um erro inesperado. Tente novamente."
-
 
 # --- CABEÇALHO ---
 st.set_page_config(page_title="SQL Genius", layout="wide")
@@ -102,7 +74,7 @@ with st.sidebar:
                 st.session_state.db_schema = st.session_state.db_service.get_schema()
 
         except Exception as e:
-            st.error(_friendly_error_message(e, context="connection"))
+            st.error(friendly_error_message(e, context="connection"))
 
     st.divider()
     st.subheader("📖 Banco de Histórico (MySQL)")
@@ -168,7 +140,7 @@ else:
                                 df_result=df
                             )
                     except Exception as e:
-                        st.error(_friendly_error_message(e, context="query"))
+                        st.error(friendly_error_message(e, context="query"))
 
         if st.session_state.sql_result:
             st.subheader("Query Gerada")
@@ -217,7 +189,10 @@ else:
                 st.info("Nenhuma consulta registrada ainda.")
             else:
                 for entry in entries:
-                    with st.expander(f"🗄️ {entry.database_name} | {entry.created_at.strftime('%d/%m/%Y %H:%M')} — {entry.question[:60]}"):
+                    timestamp = entry.created_at.strftime('%d/%m/%Y %H:%M')
+                    question_preview = entry.question[:60]
+                    expander_title = f"🗄️ {entry.database_name} | {timestamp} — {question_preview}"
+                    with st.expander(expander_title):
                         st.markdown(f"**Pergunta:** {entry.question}")
                         st.code(entry.generated_query, language="sql")
                         st.markdown("**Prévia do resultado:**")
