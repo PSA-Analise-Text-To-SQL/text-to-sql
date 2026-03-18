@@ -1,10 +1,12 @@
+import logging
+import re
+
+import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.exc import ProgrammingError, OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
+
 from src.models.database_parameters import DatabaseParameters
-import pandas as pd
-import re
-import logging
 
 # Regista falhas de segurança e erros da IA num ficheiro oculto
 logging.basicConfig(
@@ -22,14 +24,14 @@ class DatabaseService:
     def connect(self, params: DatabaseParameters):
         try:
             new_engine = create_engine(params.get_uri())
-            with new_engine.connect() as conn:
+            with new_engine.connect():
                 pass
             self._engine = new_engine
             self._params = params
             self._schema_cache = None  
             return True
         except Exception as e:
-            raise ConnectionError(f"Falha ao conectar no banco: {e}")
+            raise ConnectionError(f"Falha ao conectar no banco: {e}") from e
 
     def get_schema(self) -> str:
         if not self._engine:
@@ -58,7 +60,8 @@ class DatabaseService:
         # 1. Validação Primária: Bloqueia tudo o que não for SELECT
         if not sql_clean.startswith("SELECT"):
             logging.warning(f"Ataque bloqueado (Não é SELECT). Comando recebido: {sql}")
-            raise ValueError("Operação negada: Apenas comandos de leitura (SELECT) são permitidos.")
+            raise ValueError("Operação negada: Apenas comandos de leitura "
+            "(SELECT) são permitidos.")
 
         # 2. Validação Secundária: Bloqueia palavras-chave destrutivas (Regex)
         forbidden_keywords = [
@@ -68,8 +71,10 @@ class DatabaseService:
         
         for keyword in forbidden_keywords:
             if re.search(rf'\b{keyword}\b', sql_clean):
-                logging.warning(f"Ataque bloqueado (Palavra restrita '{keyword}'). Comando recebido: {sql}")
-                raise ValueError(f"Operação de segurança ativada: O comando restrito '{keyword}' não é permitido.")
+                logging.warning(f"Ataque bloqueado (Palavra restrita '{keyword}')." /
+                                 "Comando recebido: {sql}")
+                raise ValueError(f"Operação de segurança ativada: " /
+                                 "O comando restrito '{keyword}' não é permitido.")
 
         return sql
 
@@ -101,7 +106,7 @@ class DatabaseService:
             )
 
         logging.error(f"Erro inesperado: {e}")
-        raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.")
+        raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.") from e
 
     @property
     def is_connected(self) -> bool:

@@ -1,8 +1,10 @@
 import os
+
 import streamlit as st
 from dotenv import load_dotenv
-from src.services.llm_service import GeminiLLMService
+
 from src.models.database_parameters import DatabaseParameters
+from src.repository.history_repository import HistoryRepository
 from src.services.database_service import DatabaseService
 from src.services.history_service import HistoryService
 from src.repository.history_repository import HistoryRepository
@@ -187,7 +189,10 @@ else:
                 st.info("Nenhuma consulta registrada ainda.")
             else:
                 for entry in entries:
-                    with st.expander(f"🗄️ {entry.database_name} | {entry.created_at.strftime('%d/%m/%Y %H:%M')} — {entry.question[:60]}"):
+                    timestamp = entry.created_at.strftime('%d/%m/%Y %H:%M')
+                    question_preview = entry.question[:60]
+                    expander_title = f"🗄️ {entry.database_name} | {timestamp} — {question_preview}"
+                    with st.expander(expander_title):
                         st.markdown(f"**Pergunta:** {entry.question}")
                         st.code(entry.generated_query, language="sql")
                         st.markdown("**Prévia do resultado:**")
