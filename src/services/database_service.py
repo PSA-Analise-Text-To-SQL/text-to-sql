@@ -77,31 +77,31 @@ class DatabaseService:
         if not self._engine:
             raise RuntimeError("Conecte-se a um banco primeiro.")
 
+        safe_sql = self._sanitize_query(sql)
         try:
-            # A query passa pela camada de sanitização antes de ser executada
-            safe_sql = self._sanitize_query(sql)
-
             with self._engine.connect() as conn:
                 return pd.read_sql(text(safe_sql), conn)
-                
-        except ValueError as ve:
-            # Lança o erro de segurança para aparecer no ecrã (Streamlit)
-            raise ve
-            
-        except ProgrammingError as pe:
-            # Tratamento essencial para IA: Captura alucinações de colunas ou sintaxe errada
-            logging.error(f"Alucinação da IA detetada (ProgrammingError): {sql} | Detalhe original: {pe}")
-            raise RuntimeError("A inteligência artificial gerou uma consulta inválida ou referenciou colunas inexistentes. Por favor, reformule a sua pergunta com mais clareza.")
-            
-        except OperationalError as oe:
-            # Captura falhas técnicas (ex: o banco caiu a meio da pesquisa)
-            logging.error(f"Erro de ligação (OperationalError): {oe}")
-            raise RuntimeError("A ligação com o banco de dados falhou durante a consulta. Verifique o servidor.")
-            
         except Exception as e:
-            # Rede de segurança final
-            logging.error(f"Erro inesperado: {e}")
-            raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.")
+            self._handle_query_error(e, sql)
+
+    def _handle_query_error(self, e: Exception, sql: str):
+        if isinstance(e, ValueError):
+            raise e
+
+        if isinstance(e, ProgrammingError):
+            logging.error(f"Alucinação da IA: {sql} | {e}")
+            raise RuntimeError(
+                "A inteligência artificial gerou uma consulta inválida ou referenciou colunas inexistentes."
+            )
+
+        if isinstance(e, OperationalError):
+            logging.error(f"Erro de ligação: {e}")
+            raise RuntimeError(
+                "A ligação com o banco de dados falhou durante a consulta."
+            )
+
+        logging.error(f"Erro inesperado: {e}")
+        raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.")
 
     @property
     def is_connected(self) -> bool:

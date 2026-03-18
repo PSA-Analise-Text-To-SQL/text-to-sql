@@ -1,4 +1,6 @@
+from google import genai
 from abc import ABC, abstractmethod
+
 
 class LLMService(ABC):
     def __init__(self, api_key: str):
@@ -47,12 +49,9 @@ class LLMService(ABC):
         5. Caso seja identificado um pedido não condizente com SELECT, retorne uma mensagem de erro.
         6. Caso haja nomes de colunas iguais em 2 tabelas de uma query, utilize apelidos 'AS' para evitar confusão.
         """
-    
+
     def _clean_response(self, text: str) -> str:
         return text.replace("```sql", "").replace("```", "").strip()
-    
-
-from google import genai
 
 
 class GeminiLLMService(LLMService):
@@ -61,13 +60,13 @@ class GeminiLLMService(LLMService):
         return genai.Client(api_key=self.api_key)
 
     def _call_model(self, prompt: str) -> str:
-        response = self.client.models.generate_content( # type: ignore
-            model="gemini-3-flash-preview",
+        response = self.client.models.generate_content(  # type: ignore
+            model="gemini-2.0-flash",
             contents=prompt
         )
 
-        return response.text if response.text else None # type: ignore
-    
+        return response.text if response.text else None  # type: ignore
+
     def explain_query(self, query: str) -> str:
         try:
             prompt = f"Explique de forma didática e enxuta o que a seguinte query SQL faz, passo a passo:\n{query}"
@@ -78,7 +77,7 @@ class GeminiLLMService(LLMService):
             return response_text.strip()
         except Exception as e:
             raise Exception(f"Erro ao explicar SQL: {e}")
-    
+
     def explain_results(self, question: str, results: str) -> str:
         try:
             prompt = f"""
