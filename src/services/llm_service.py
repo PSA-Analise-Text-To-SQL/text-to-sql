@@ -9,7 +9,7 @@ class LLMService(ABC):
         self.client = self._create_client()
 
     @abstractmethod
-    def _create_client(self) -> None:
+    def _create_client(self):
         pass
 
     @abstractmethod
