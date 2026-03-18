@@ -13,7 +13,7 @@ class HistoryService:
         database_name: str,
         question: str,
         generated_query: str,
-        df_result: pd.DataFrame
+        df_result: pd.DataFrame,
     ) -> HistoryEntry:
         preview = (
             df_result.head(5).to_string(index=False)
@@ -24,7 +24,7 @@ class HistoryService:
             database_name=database_name,
             question=question,
             generated_query=generated_query,
-            result_preview=preview
+            result_preview=preview,
         )
         return self._repository.save(entry)
 
