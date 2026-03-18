@@ -110,10 +110,10 @@ with st.sidebar:
     if st.button("Conectar ao Histórico"):
         try:
             repo = HistoryRepository(
-                host=os.getenv("HIST_HOST"),
-                user=os.getenv("HIST_USER"),
-                password=os.getenv("HIST_PASSWORD"),
-                database=os.getenv("HIST_DATABASE"),
+                host=os.getenv("HIST_HOST") or "localhost",
+                user=os.getenv("HIST_USER") or "root",
+                password=os.getenv("HIST_PASSWORD") or "",
+                database=os.getenv("HIST_DATABASE") or "text_to_sql_history",
                 port=int(os.getenv("HIST_PORT", 3306))
             )
             st.session_state.history_service = HistoryService(repo)

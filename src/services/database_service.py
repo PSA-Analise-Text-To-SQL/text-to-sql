@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import ProgrammingError, OperationalError
 from src.models.database_parameters import DatabaseParameters
-import pandas as pd
+import pandas as pd # type: ignore
 import re
 import logging
 
@@ -14,12 +14,12 @@ logging.basicConfig(
 )
 
 class DatabaseService:
-    def __init__(self):
+    def __init__(self) -> None:
         self._engine: Engine | None = None
         self._params: DatabaseParameters | None = None
         self._schema_cache: str | None = None
 
-    def connect(self, params: DatabaseParameters):
+    def connect(self, params: DatabaseParameters) -> bool:
         try:
             new_engine = create_engine(params.get_uri())
             with new_engine.connect() as conn:
