@@ -7,7 +7,7 @@ from src.models.database_parameters import DatabaseParameters
 from src.repository.history_repository import HistoryRepository
 from src.services.database_service import DatabaseService
 from src.services.history_service import HistoryService
-from src.repository.history_repository import HistoryRepository
+from src.services.llm_service import GeminiLLMService
 from src.utils.error_handling import friendly_error_message
 
 load_dotenv()
@@ -52,19 +52,17 @@ with st.sidebar:
                 "Usuário": user,
                 "Google API Key": gemini_key,
             }
-            faltando = [nome for nome, valor in obrigatorios.items()
-                        if not valor]
+            faltando = [nome for nome, valor in obrigatorios.items() if not valor]
 
             if faltando:
-                st.warning(
-                    f"Preencha os campos obrigatórios: {', '.join(faltando)}.")
+                st.warning(f"Preencha os campos obrigatórios: {', '.join(faltando)}.")
                 st.stop()
 
             config = {
                 "host": host,
                 "database": database,
                 "user": user,
-                "password": password
+                "password": password,
             }
 
             params = DatabaseParameters.make(db_type, **config)
@@ -81,12 +79,32 @@ with st.sidebar:
 
     if st.button("Conectar ao Histórico"):
         try:
+            hist_host = os.getenv("HIST_HOST") or ""
+            hist_user = os.getenv("HIST_USER") or ""
+            hist_password = os.getenv("HIST_PASSWORD") or ""
+            hist_database = os.getenv("HIST_DATABASE") or ""
+
+            required_history = {
+                "HIST_HOST": hist_host,
+                "HIST_USER": hist_user,
+                "HIST_PASSWORD": hist_password,
+                "HIST_DATABASE": hist_database,
+            }
+            missing_history = [
+                name for name, value in required_history.items() if not value
+            ]
+            if missing_history:
+                raise RuntimeError(
+                    "Variáveis de ambiente ausentes para o histórico: "
+                    f"{', '.join(missing_history)}"
+                )
+
             repo = HistoryRepository(
-                host=os.getenv("HIST_HOST") or "localhost",
-                user=os.getenv("HIST_USER") or "root",
-                password=os.getenv("HIST_PASSWORD") or "",
-                database=os.getenv("HIST_DATABASE") or "text_to_sql_history",
-                port=int(os.getenv("HIST_PORT", 3306))
+                host=hist_host,
+                user=hist_user,
+                password=hist_password,
+                database=hist_database,
+                port=int(os.getenv("HIST_PORT", "3306")),
             )
             st.session_state.history_service = HistoryService(repo)
             st.success("Histórico conectado!")
@@ -101,12 +119,14 @@ if not st.session_state.db_service.is_connected:
     st.info("👈 Conecte-se ao banco na barra lateral para começar.")
 else:
     tab_query, tab_schema, tab_history = st.tabs(
-        ["💬 Perguntar", "📊 Esquema", "📖 Histórico"])
+        ["💬 Perguntar", "📊 Esquema", "📖 Histórico"]
+    )
 
     with tab_query:
         st.subheader("Faça uma pergunta sobre seus dados")
         question = st.text_area(
-            "Sua pergunta:", placeholder="Ex: Qual o total de vendas por mês?")
+            "Sua pergunta:", placeholder="Ex: Qual o total de vendas por mês?"
+        )
 
         if st.button("Gerar e Executar"):
             if not gemini_key:
@@ -120,12 +140,11 @@ else:
                 with st.spinner("IA processando..."):
                     try:
                         current_schema = st.session_state.db_service.get_schema()
-                        st.session_state.llm_service = GeminiLLMService(
-                            gemini_key)
+                        st.session_state.llm_service = GeminiLLMService(gemini_key)
                         sql_result = st.session_state.llm_service.generate_sql_query(
-                            question, current_schema, db_type)
-                        df = st.session_state.db_service.execute_query(
-                            sql_result)
+                            question, current_schema, db_type
+                        )
+                        df = st.session_state.db_service.execute_query(sql_result)
 
                         st.session_state.sql_result = sql_result
                         st.session_state.df = df
@@ -137,7 +156,7 @@ else:
                                 database_name=database,
                                 question=question,
                                 generated_query=sql_result,
-                                df_result=df
+                                df_result=df,
                             )
                     except Exception as e:
                         st.error(friendly_error_message(e, context="query"))
@@ -150,8 +169,11 @@ else:
 
             if st.button("🔍 Explicar Query"):
                 with st.spinner("IA traduzindo..."):
-                    st.session_state.explanation = st.session_state.llm_service.explain_query(
-                        st.session_state.sql_result)
+                    st.session_state.explanation = (
+                        st.session_state.llm_service.explain_query(
+                            st.session_state.sql_result
+                        )
+                    )
             if st.session_state.explanation:
                 st.info(st.session_state.explanation)
             if st.session_state.df is not None:
@@ -163,8 +185,12 @@ else:
                     if st.button("📊 Analisar Resultados"):
                         with st.spinner("IA analisando..."):
                             sample = st.session_state.df.head(5).to_csv()
-                            st.session_state.analysis = st.session_state.llm_service.explain_results(
-                                st.session_state.last_question, sample)
+                            st.session_state.analysis = (
+                                st.session_state.llm_service.explain_results(
+                                    st.session_state.last_question,
+                                    sample,
+                                )
+                            )
                     if st.session_state.analysis:
                         st.success(st.session_state.analysis)
 
@@ -189,9 +215,11 @@ else:
                 st.info("Nenhuma consulta registrada ainda.")
             else:
                 for entry in entries:
-                    timestamp = entry.created_at.strftime('%d/%m/%Y %H:%M')
+                    timestamp = entry.created_at.strftime("%d/%m/%Y %H:%M")
                     question_preview = entry.question[:60]
-                    expander_title = f"🗄️ {entry.database_name} | {timestamp} — {question_preview}"
+                    expander_title = (
+                        f"🗄️ {entry.database_name} | {timestamp} — {question_preview}"
+                    )
                     with st.expander(expander_title):
                         st.markdown(f"**Pergunta:** {entry.question}")
                         st.code(entry.generated_query, language="sql")

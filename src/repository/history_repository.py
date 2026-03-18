@@ -1,4 +1,3 @@
-
 import mysql.connector
 
 from src.models.history_entry import HistoryEntry
@@ -6,19 +5,14 @@ from src.models.history_entry import HistoryEntry
 
 class HistoryRepository:
     def __init__(
-        self, 
-        host: str, 
-        user: str, 
-        password: str,
-        database: str, 
-        port: int = 3306
+        self, host: str, user: str, password: str, database: str, port: int = 3306
     ):
         self._config = {
             "host": host,
             "user": user,
             "password": password,
             "database": database,
-            "port": port
+            "port": port,
         }
         self._ensure_table()
 
@@ -50,20 +44,26 @@ class HistoryRepository:
         """
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(sql, (
-                    entry.database_name,
-                    entry.question,
-                    entry.generated_query,
-                    entry.result_preview,
-                    entry.created_at
-                ))
+                cursor.execute(
+                    sql,
+                    (
+                        entry.database_name,
+                        entry.question,
+                        entry.generated_query,
+                        entry.result_preview,
+                        entry.created_at,
+                    ),
+                )
                 entry.id = cursor.lastrowid  # ✅ dentro do bloco, cursor ainda aberto
             conn.commit()
         return entry
 
     def find_all(self) -> list[HistoryEntry]:
-        sql = "SELECT id, database_name, question, generated_query, result_preview, created_at " \
-        "FROM query_history ORDER BY created_at DESC"
+        sql = (
+            "SELECT id, database_name, question, generated_query, "
+            "result_preview, created_at "
+            "FROM query_history ORDER BY created_at DESC"
+        )
         with self._get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute(sql)

@@ -31,7 +31,7 @@ class LLMService(ABC):
 
     def _build_prompt(self, question: str, schema: str, db_type: str) -> str:
         return f"""
-        Você é um especialista em SQL. 
+        Você é um especialista em SQL.
         Converta a pergunta do usuário em uma consulta SQL válida
         baseada no schema fornecido e no tipo de banco de dados informado.
 
@@ -40,10 +40,10 @@ class LLMService(ABC):
 
         TIPO DE BANCO DE DADOS
         {db_type}
-        
+
         PERGUNTA DO USUÁRIO:
         "{question}"
-        
+
         REGRAS ESTRITAS:
         1. Retorne APENAS o código SQL puro.
         2. NÃO use markdown (sem ```sql ou ```). Apenas o texto da query.
@@ -61,14 +61,12 @@ class LLMService(ABC):
 
 
 class GeminiLLMService(LLMService):
-
-    def _create_client(self) -> genai.Client:  # type: ignore
+    def _create_client(self) -> genai.Client:
         return genai.Client(api_key=self.api_key)
 
     def _call_model(self, prompt: str) -> str:
         response = self.client.models.generate_content(  # type: ignore
-            model="gemini-2.0-flash",
-            contents=prompt
+            model="gemini-2.0-flash", contents=prompt
         )
 
         return response.text if response.text else None  # type: ignore
@@ -93,10 +91,10 @@ class GeminiLLMService(LLMService):
             prompt = f"""
             Pergunta original: {question}
             Dados retornados: {results}
-            
+
             Explique o que esses dados significam em relação à pergunta do usuário.
-            Seja breve e didático, destacando insights importantes. 
-            Evite repetir a pergunta ou os dados, foque na interpretação. 
+            Seja breve e didático, destacando insights importantes.
+            Evite repetir a pergunta ou os dados, foque na interpretação.
             """
             response_text = self._call_model(prompt)
 

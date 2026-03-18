@@ -30,29 +30,32 @@ class DatabaseParameters(BaseModel, ABC):
     def get_uri(self) -> str:
         pass
 
+
 class PostgresParameters(DatabaseParameters):
     port: int = 5432
-    
+
     def get_dialect_name(self) -> str:
         return "PostgreSQL"
-    
+
     def get_uri(self) -> str:
         return f"postgresql+psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
+
 class MySQLParameters(DatabaseParameters):
     port: int = 3306
-    
+
     def get_dialect_name(self) -> str:
         return "MySQL"
-    
+
     def get_uri(self) -> str:
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
+
 class OracleParameters(DatabaseParameters):
     port: int = 1521
-    
+
     def get_dialect_name(self) -> str:
         return "Oracle"
-    
+
     def get_uri(self) -> str:
         return f"oracle+oracledb://{self.user}:{self.password}@{self.host}:{self.port}/?service_name={self.database}"
