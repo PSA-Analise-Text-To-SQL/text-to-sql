@@ -62,7 +62,7 @@ class LLMService(ABC):
 
 class GeminiLLMService(LLMService):
 
-    def _create_client(self):
+    def _create_client(self) -> genai.Client:  # type: ignore
         return genai.Client(api_key=self.api_key)
 
     def _call_model(self, prompt: str) -> str:

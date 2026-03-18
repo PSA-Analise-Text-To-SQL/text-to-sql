@@ -1,5 +1,5 @@
-import pandas as pd
 
+import pandas as pd  # type: ignore
 from src.models.history_entry import HistoryEntry
 from src.repository.history_repository import HistoryRepository
 
@@ -31,5 +31,5 @@ class HistoryService:
     def get_all(self) -> list[HistoryEntry]:
         return self._repository.find_all()
 
-    def clear(self):
+    def clear(self) -> None:
         self._repository.clear()

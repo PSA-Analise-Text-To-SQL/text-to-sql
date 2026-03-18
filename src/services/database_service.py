@@ -7,6 +7,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from src.models.database_parameters import DatabaseParameters
+import pandas as pd # type: ignore
+import re
+import logging
 
 # Regista falhas de segurança e erros da IA num ficheiro oculto
 logging.basicConfig(
@@ -16,12 +19,12 @@ logging.basicConfig(
 )
 
 class DatabaseService:
-    def __init__(self):
+    def __init__(self) -> None:
         self._engine: Engine | None = None
         self._params: DatabaseParameters | None = None
         self._schema_cache: str | None = None
 
-    def connect(self, params: DatabaseParameters):
+    def connect(self, params: DatabaseParameters) -> bool:
         try:
             new_engine = create_engine(params.get_uri())
             with new_engine.connect():

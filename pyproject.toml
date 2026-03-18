@@ -1,20 +1,34 @@
 [tool.ruff]
-# Habilita regras de Erro (E), Avisos (W), Isort (I), e Bugbear (B)
-select = ["E", "F", "I", "B", "C4", "UP"]
-ignore = []
+target-version = "py312"
 line-length = 88
-target-version = "py310"
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (erros de lógica/variáveis não usadas)
+    "I",    # isort (organização de imports)
+    "B",    # flake8-bugbear (design de código propenso a bugs)
+    "C4",   # flake8-comprehensions (melhoria de performance em listas/dicionários)
+    "UP",   # pyupgrade (sugere sintaxes mais modernas do Python)
+    "S",    # flake8-bandit (segurança integrada)
+    "N",    # pep8-naming (padrões de nomes de variáveis/classes)
+    "SIM",  # flake8-simplify (ajuda a reduzir a complexidade do código)
+    "ANN",  # flake8-annotations (garante que você está tipando as funções)
+]
+ignore = ["ANN101", "ANN102"] # Ignora anotação de 'self' e 'cls' (muito repetitivo)
 
 [tool.ruff.mccabe]
-# Define o limite de complexidade ciclomática (Ruff também faz isso!)
-max-complexity = 10
+max-complexity = 10  # Acima de 10, o Ruff avisa que a função está confusa.
 
 [tool.mypy]
-python_version = "3.10"
-strict = true
-ignore_missing_imports = true
-warn_unused_configs = true
+python_version = "3.12"
+strict = true  # Ativa todas as verificações rigorosas
+disallow_untyped_defs = true # Obriga você a definir tipos em todas as funções
+check_untyped_defs = true
+warn_return_any = true
+no_implicit_optional = true
+show_error_codes = true  # Mostra o código do erro (ex: [attr-defined]) facilitando a correção
 
 [tool.bandit]
 exclude_dirs = ["tests", "venv", ".venv"]
+severity = "medium"
 skips = ["B101"] # Exemplo: ignora 'assert' em código de produção se necessário
