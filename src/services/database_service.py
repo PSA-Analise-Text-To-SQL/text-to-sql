@@ -71,9 +71,9 @@ class DatabaseService:
         
         for keyword in forbidden_keywords:
             if re.search(rf'\b{keyword}\b', sql_clean):
-                logging.warning(f"Ataque bloqueado (Palavra restrita '{keyword}')." /
+                logging.warning(f"Ataque bloqueado (Palavra restrita '{keyword}')."
                                  "Comando recebido: {sql}")
-                raise ValueError(f"Operação de segurança ativada: " /
+                raise ValueError(f"Operação de segurança ativada: "
                                  "O comando restrito '{keyword}' não é permitido.")
 
         return sql
