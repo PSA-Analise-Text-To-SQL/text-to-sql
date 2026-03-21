@@ -1,23 +1,25 @@
 import mysql.connector
+
 from src.models.history_entry import HistoryEntry
-from datetime import datetime
 
 
 class HistoryRepository:
-    def __init__(self, host: str, user: str, password: str, database: str, port: int = 3306):
+    def __init__(
+        self, host: str, user: str, password: str, database: str, port: int = 3306
+    ):
         self._config = {
             "host": host,
             "user": user,
             "password": password,
             "database": database,
-            "port": port
+            "port": port,
         }
         self._ensure_table()
 
-    def _get_connection(self):
+    def _get_connection(self) -> mysql.connector.abstracts.MySQLConnection:  # type: ignore
         return mysql.connector.connect(**self._config)
 
-    def _ensure_table(self):
+    def _ensure_table(self) -> None:
         """Cria a tabela se ela não existir."""
         sql = """
             CREATE TABLE IF NOT EXISTS query_history (
@@ -42,26 +44,33 @@ class HistoryRepository:
         """
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(sql, (
-                    entry.database_name,
-                    entry.question,
-                    entry.generated_query,
-                    entry.result_preview,
-                    entry.created_at
-                ))
+                cursor.execute(
+                    sql,
+                    (
+                        entry.database_name,
+                        entry.question,
+                        entry.generated_query,
+                        entry.result_preview,
+                        entry.created_at,
+                    ),
+                )
                 entry.id = cursor.lastrowid  # ✅ dentro do bloco, cursor ainda aberto
             conn.commit()
         return entry
 
     def find_all(self) -> list[HistoryEntry]:
-        sql = "SELECT id, database_name, question, generated_query, result_preview, created_at FROM query_history ORDER BY created_at DESC"
+        sql = (
+            "SELECT id, database_name, question, generated_query, "
+            "result_preview, created_at "
+            "FROM query_history ORDER BY created_at DESC"
+        )
         with self._get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute(sql)
                 rows = cursor.fetchall()
         return [HistoryEntry(**row) for row in rows]
 
-    def clear(self):
+    def clear(self) -> None:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM query_history")

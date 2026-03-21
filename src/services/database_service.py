@@ -13,16 +13,17 @@ from src.models.database_parameters import DatabaseParameters
 logging.basicConfig(
     filename="security_audit.log",
     level=logging.WARNING,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+
 class DatabaseService:
-    def __init__(self):
+    def __init__(self) -> None:
         self._engine: Engine | None = None
         self._params: DatabaseParameters | None = None
         self._schema_cache: str | None = None
 
-    def connect(self, params: DatabaseParameters):
+    def connect(self, params: DatabaseParameters) -> bool:
         try:
             new_engine = create_engine(params.get_uri())
             with new_engine.connect():
@@ -30,10 +31,10 @@ class DatabaseService:
             
             self._engine = new_engine
             self._params = params
-            self._schema_cache = None  
+            self._schema_cache = None
             return True
         except Exception as e:
-            raise ConnectionError(f"Falha ao conectar no banco: {e}")
+            raise ConnectionError(f"Falha ao conectar no banco: {e}") from e
 
     def get_schema(self) -> str:
         if not self._engine:
@@ -88,18 +89,33 @@ class DatabaseService:
 
         if not sql_clean.startswith("SELECT"):
             logging.warning(f"Ataque bloqueado (Não é SELECT). Comando recebido: {sql}")
-            raise ValueError("Operação negada: Apenas comandos de leitura (SELECT) são permitidos.")
+            raise ValueError(
+                "Operação negada: Apenas comandos de leitura (SELECT) são permitidos."
+            )
 
         forbidden_keywords = [
-            "DROP", "DELETE", "UPDATE", "INSERT", "ALTER", 
-            "TRUNCATE", "REPLACE", "GRANT", "REVOKE", "MERGE"
+            "DROP",
+            "DELETE",
+            "UPDATE",
+            "INSERT",
+            "ALTER",
+            "TRUNCATE",
+            "REPLACE",
+            "GRANT",
+            "REVOKE",
+            "MERGE",
         ]
-        
-        for keyword in forbidden_keywords:
-            if re.search(rf'\b{keyword}\b', sql_clean):
-                logging.warning(f"Ataque bloqueado (Palavra restrita '{keyword}'). Comando recebido: {sql}")
-                raise ValueError(f"Operação de segurança ativada: O comando restrito '{keyword}' não é permitido.")
 
+        for keyword in forbidden_keywords:
+            if re.search(rf"\b{keyword}\b", sql_clean):
+                logging.warning(
+                    f"Ataque bloqueado (Palavra restrita '{keyword}')."
+                    f"Comando recebido: {sql}"
+                )
+                raise ValueError(
+                    "Operação de segurança ativada: "
+                    f"O comando restrito '{keyword}' não é permitido."
+                )
         return sql
 
     def execute_query(self, sql: str) -> pd.DataFrame:
@@ -113,14 +129,15 @@ class DatabaseService:
         except Exception as e:
             self._handle_query_error(e, sql)
 
-    def _handle_query_error(self, e: Exception, sql: str):
+    def _handle_query_error(self, e: Exception, sql: str) -> NoReturn:
         if isinstance(e, ValueError):
             raise e
 
         if isinstance(e, ProgrammingError):
             logging.error(f"Alucinação da IA: {sql} | {e}")
             raise RuntimeError(
-                "A inteligência artificial gerou uma consulta inválida ou referenciou colunas inexistentes."
+                "A inteligência artificial gerou uma consulta inválida "
+                "ou referenciou colunas inexistentes."
             )
 
         if isinstance(e, OperationalError):
@@ -130,7 +147,7 @@ class DatabaseService:
             )
 
         logging.error(f"Erro inesperado: {e}")
-        raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.")
+        raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.") from e
 
     @staticmethod
     def _simplify_type(col_type) -> str:
