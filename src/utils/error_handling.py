@@ -1,11 +1,11 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 ERROR_RULES = [
     (
-        [
-            "password authentication failed",
-            "access denied",
-            "invalid credentials",
-            "login failed",
-        ],
+        ["password authentication failed", "access denied",
+         "invalid credentials", "login failed"],
         "Não foi possível conectar: usuário ou senha inválidos.",
     ),
     (
@@ -32,18 +32,30 @@ ERROR_RULES = [
 
 QUERY_RULES = [
     (
-        ["429", "resource_exhausted", "quota exceeded", "rate limit"],
+        ["429", "resource_exhausted", "quota exceeded", "rate limit exceeded",
+         "too many requests"],
         "⏳ Limite de requisições atingido na API Google. "
-        "Tente novamente em alguns minutos ou considere um plano pago.",
+        "Aguarde alguns minutos e tente novamente.",
     ),
     (
-        ["erro ao gerar sql", "a ia não retornou", "api key", "invalid api"],
-        "Não foi possível gerar a consulta: "
-        "verifique a API Key ou reformule a pergunta.",
+        ["api_key_invalid", "api key not valid", "invalid api key",
+         "permission_denied", "api key"],
+        "🔑 API Key inválida ou sem permissão. "
+        "Verifique a chave no Google AI Studio.",
+    ),
+    (
+        ["not found", "404", "deprecated", "invalid model",
+         "nenhum modelo gemini disponível"],
+        "⚠️ Modelo Gemini indisponível para esta API Key. "
+        "Certifique-se de que o Gemini API está ativado no Google Cloud.",
     ),
     (
         ["syntax error", "sql syntax", "ora-00933", "ora-00900"],
         "A consulta gerada é inválida para este banco.",
+    ),
+    (
+        ["operação negada", "operação de segurança"],
+        "Operação bloqueada por segurança: apenas consultas SELECT são permitidas.",
     ),
 ]
 
@@ -56,7 +68,10 @@ def _match_rules(msg: str, rules: list) -> str | None:
 
 
 def friendly_error_message(exc: Exception, context: str = "geral") -> str:
-    msg = str(exc).lower()
+    raw = str(exc)
+    msg = raw.lower()
+
+    logger.error(f"[{context}] {type(exc).__name__}: {raw}")
 
     result = _match_rules(msg, ERROR_RULES)
     if result:
@@ -66,6 +81,7 @@ def friendly_error_message(exc: Exception, context: str = "geral") -> str:
         result = _match_rules(msg, QUERY_RULES)
         if result:
             return result
-        return "Não foi possível executar a consulta no banco."
+        # Fallback: mostra o tipo do erro para ajudar no diagnóstico
+        return f"Não foi possível executar a consulta. ({type(exc).__name__})"
 
-    return "Ocorreu um erro inesperado. Tente novamente."
+    return f"Ocorreu um erro inesperado. ({type(exc).__name__})"

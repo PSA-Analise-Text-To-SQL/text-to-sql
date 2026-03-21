@@ -1,16 +1,13 @@
 import logging
 import re
 from typing import NoReturn
-
+ 
 import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError, ProgrammingError
-
+ 
 from src.models.database_parameters import DatabaseParameters
-import pandas as pd # type: ignore
-import re
-import logging
 
 # Regista falhas de segurança e erros da IA num ficheiro oculto
 logging.basicConfig(
@@ -31,6 +28,7 @@ class DatabaseService:
             new_engine = create_engine(params.get_uri())
             with new_engine.connect():
                 pass
+            
             self._engine = new_engine
             self._params = params
             self._schema_cache = None
@@ -46,30 +44,55 @@ class DatabaseService:
             return self._schema_cache
 
         inspector = inspect(self._engine)
-        schema_text = ""
-        for table_name in inspector.get_table_names():
-            schema_text += f"\nTabela: {table_name}\n"
-            for col in inspector.get_columns(table_name):
-                schema_text += f" - {col['name']} ({col['type']})\n"
+        dialect = self._engine.dialect.name
+        tables = self._get_user_tables(inspector, dialect)
+        
+        lines = []
+        for table_name in tables:
+            kwargs = {"schema": "public"} if dialect == "postgresql" else {}
+            cols = inspector.get_columns(table_name, **kwargs)
+            col_defs = ", ".join(
+                f"{c['name']}:{self._simplify_type(c['type'])}" for c in cols
+            )
+            lines.append(f"{table_name}({col_defs})")
+ 
+        self._schema_cache = "\n".join(lines)
+        return self._schema_cache
 
-        self._schema_cache = schema_text
-        return schema_text
-
+    def _get_user_tables(self, inspector, dialect: str) -> list[str]:
+        SYSTEM_PREFIXES: dict[str, list[str]] = {
+            "postgresql": [],
+            "mysql": [],
+            "oracle": [
+                "AQ$", "DR$", "DEF$", "LOGMNR", "MVIEW$", "OL$",
+                "REPCAT$", "SCHEDULER$", "STREAMS$", "WRH$", "WRI$",
+                "WRM$", "XDB$", "APEX$", "DBMS_", "SYS_",
+            ],
+        }
+ 
+        if dialect == "postgresql":
+            return inspector.get_table_names(schema="public")
+ 
+        all_tables = inspector.get_table_names()
+        prefixes = SYSTEM_PREFIXES.get(dialect, [])
+ 
+        if not prefixes:
+            return all_tables
+ 
+        return [
+            t for t in all_tables
+            if not any(t.upper().startswith(p) for p in prefixes)
+        ]
+        
     def _sanitize_query(self, sql: str) -> str:
-        """
-        Garante que apenas comandos de leitura (SELECT) sejam executados
-        e bloqueia operações destrutivas.
-        """
         sql_clean = sql.strip().upper()
 
-        # 1. Validação Primária: Bloqueia tudo o que não for SELECT
         if not sql_clean.startswith("SELECT"):
             logging.warning(f"Ataque bloqueado (Não é SELECT). Comando recebido: {sql}")
             raise ValueError(
                 "Operação negada: Apenas comandos de leitura (SELECT) são permitidos."
             )
 
-        # 2. Validação Secundária: Bloqueia palavras-chave destrutivas (Regex)
         forbidden_keywords = [
             "DROP",
             "DELETE",
@@ -125,6 +148,33 @@ class DatabaseService:
 
         logging.error(f"Erro inesperado: {e}")
         raise RuntimeError("Ocorreu um erro inesperado ao processar os dados.") from e
+
+    @staticmethod
+    def _simplify_type(col_type) -> str:
+        type_str = str(col_type).upper()
+ 
+        SIMPLIFICATIONS = [
+            (["VARCHAR", "NVARCHAR", "CHAR", "NCHAR", "TEXT",
+              "CLOB", "NCLOB", "TINYTEXT", "MEDIUMTEXT", "LONGTEXT",
+              "STRING", "BPCHAR"], "TEXT"),
+            (["BIGINT", "INTEGER", "INT", "SMALLINT", "TINYINT",
+              "MEDIUMINT", "NUMBER", "SERIAL", "BYTEINT"], "INT"),
+            (["NUMERIC", "DECIMAL", "FLOAT", "DOUBLE",
+              "REAL", "BINARY_FLOAT", "BINARY_DOUBLE"], "NUM"),
+            (["TIMESTAMP", "DATETIME"], "DATETIME"),
+            (["DATE"], "DATE"),
+            (["TIME"], "TIME"),
+            (["BOOLEAN", "BOOL", "BIT"], "BOOL"),
+            (["BLOB", "BINARY", "VARBINARY", "RAW", "LONG RAW", "BYTEA"], "BYTES"),
+            (["JSON", "JSONB"], "JSON"),
+            (["UUID"], "UUID"),
+        ]
+ 
+        for prefixes, label in SIMPLIFICATIONS:
+            if any(type_str.startswith(p) for p in prefixes):
+                return label
+        
+        return type_str.split("(")[0]
 
     @property
     def is_connected(self) -> bool:
