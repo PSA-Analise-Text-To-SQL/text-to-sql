@@ -90,7 +90,7 @@ class GeminiLLMService(LLMService):
                         model=model_name,
                         contents=prompt,
                         config=types.GenerateContentConfig(
-                            max_output_tokens=1024,
+                            # max_output_tokens=1024,
                             temperature=0.0,
                         ),
                     )
