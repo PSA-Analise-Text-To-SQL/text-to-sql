@@ -1,4 +1,5 @@
-import pandas as pd
+
+import pandas as pd  # type: ignore
 from src.models.history_entry import HistoryEntry
 from src.repository.history_repository import HistoryRepository
 
@@ -12,14 +13,18 @@ class HistoryService:
         database_name: str,
         question: str,
         generated_query: str,
-        df_result: pd.DataFrame
+        df_result: pd.DataFrame,
     ) -> HistoryEntry:
-        preview = df_result.head(5).to_string(index=False) if not df_result.empty else "Nenhum resultado."
+        preview = (
+            df_result.head(5).to_string(index=False)
+            if not df_result.empty
+            else "Nenhum resultado."
+        )
         entry = HistoryEntry(
             database_name=database_name,
             question=question,
             generated_query=generated_query,
-            result_preview=preview
+            result_preview=preview,
         )
         return self._repository.save(entry)
 
