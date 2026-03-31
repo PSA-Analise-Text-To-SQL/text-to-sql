@@ -52,10 +52,12 @@ with st.sidebar:
                 "Usuário": user,
                 "Google API Key": gemini_key,
             }
-            faltando = [nome for nome, valor in obrigatorios.items() if not valor]
+            faltando = [nome for nome, valor in obrigatorios.items()
+                        if not valor]
 
             if faltando:
-                st.warning(f"Preencha os campos obrigatórios: {', '.join(faltando)}.")
+                st.warning(
+                    f"Preencha os campos obrigatórios: {', '.join(faltando)}.")
                 st.stop()
 
             config = {
@@ -87,7 +89,7 @@ with st.sidebar:
             required_history = {
                 "HIST_HOST": hist_host,
                 "HIST_USER": hist_user,
-                "HIST_PASSWORD": hist_password,
+                # "HIST_PASSWORD": hist_password,
                 "HIST_DATABASE": hist_database,
             }
             missing_history = [
@@ -140,11 +142,13 @@ else:
                 with st.spinner("IA processando..."):
                     try:
                         current_schema = st.session_state.db_service.get_schema()
-                        st.session_state.llm_service = GeminiLLMService(gemini_key)
+                        st.session_state.llm_service = GeminiLLMService(
+                            gemini_key)
                         sql_result = st.session_state.llm_service.generate_sql_query(
                             question, current_schema, db_type
                         )
-                        df = st.session_state.db_service.execute_query(sql_result)
+                        df = st.session_state.db_service.execute_query(
+                            sql_result)
 
                         st.session_state.sql_result = sql_result
                         st.session_state.df = df

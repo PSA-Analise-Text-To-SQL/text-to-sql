@@ -1,5 +1,5 @@
 import mysql.connector
-
+from typing import Any
 from src.models.history_entry import HistoryEntry
 
 
@@ -16,7 +16,7 @@ class HistoryRepository:
         }
         self._ensure_table()
 
-    def _get_connection(self) -> mysql.connector.abstracts.MySQLConnection:  # type: ignore
+    def _get_connection(self) -> Any:
         return mysql.connector.connect(**self._config)
 
     def _ensure_table(self) -> None:
