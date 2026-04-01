@@ -35,4 +35,4 @@ jobs:
             -Dproject.settings=sonar-project.properties
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Gerado automaticamente pelo GitHub
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # Você precisa gerar no SonarCloud e salvar nos Secrets do GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Você precisa gerar no SonarCloud e salvar nos Secrets do GitHub
