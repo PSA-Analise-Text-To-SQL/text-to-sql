@@ -26,13 +26,13 @@ jobs:
 
       - name: Run tests and generate coverage
         run: |
-          pytest --cov=. --cov-report=xml
+          pytest --cov=src --cov-config=.coveragerc --cov-report=xml:coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
         with:
           args: >
-            -Dproject.settings=sonar-project.properties
+            -Dsonar.python.coverage.reportPaths=coverage.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Gerado automaticamente pelo GitHub
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Você precisa gerar no SonarCloud e salvar nos Secrets do GitHub
