@@ -16,7 +16,7 @@ class HistoryRepository:
         }
         self._ensure_table()
 
-    def _get_connection(self) -> mysql.connector.abstracts.MySQLConnection:  # type: ignore
+    def _get_connection(self) -> "mysql.connector.abstracts.MySQLConnection":  # type: ignore
         return mysql.connector.connect(**self._config)
 
     def _ensure_table(self) -> None:
